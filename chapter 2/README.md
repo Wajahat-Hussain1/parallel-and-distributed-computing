@@ -7,13 +7,13 @@ To make the demonstration practical, the script simulates an asynchronous securi
 
 ## Key Concepts Demonstrated
 
-* **Thread-Safe Data Transfer (`queue.Queue`):** 
+- **Thread-Safe Data Transfer (`queue.Queue`):** 
   Instead of using a standard Python list (which can suffer from race conditions), this script uses `queue.Queue`. The Queue manages memory locks automatically, allowing the `LogProducer` to safely `.put()` data while the `LogConsumer` concurrently uses `.get()` to retrieve it.
   
-* **Graceful Shutdown Signaling (`threading.Event`):**
+- **Graceful Shutdown Signaling (`threading.Event`):**
   A common issue in Producer-Consumer scripts is the Consumer getting stuck in an infinite `while True:` loop, requiring a forced termination. This code solves that by passing a `threading.Event` flag. Once the Producer finishes its loop, it calls `event.set()`. The Consumer checks this flag and shuts down cleanly once the queue is empty, preventing memory leaks and dangling threads.
 
-* **Thread-Safe Output (`logging` vs `print`):**
+- **Thread-Safe Output (`logging` vs `print`):**
   The `logging` module is used instead of standard `print()` statements because `logging` is thread-safe in Python. This guarantees that console outputs from simultaneous threads do not overwrite each other or break onto the same line.
 
 ## Execution Output
@@ -33,9 +33,17 @@ Running the script via the terminal produces a real-time execution timeline:
 2026-11-08 01:33:38,036 ProducerThread  INFO     Finished generating alerts. Setting stop event.
 2026-11-08 01:33:38,562 ConsumerThread  INFO     Consumer shutting down gracefully.
 2026-11-08 01:33:38,564 MainThread      INFO     Pipeline execution successfully completed.
+```
 
 ## Understanding the Execution Flow
 - **Data Handoff:** The logs show that milliseconds after the `ProducerThread` wakes up and queues a random security event, the `ConsumerThread` pulls it from the shared Queue and processes it. This generation and consumption cycle executes 5 times.
 - **The Signaling Event:** After queuing the 5th alert, the Producer announces it is finished and triggers the `threading.Event()` flag. This acts as a control signal to the Consumer that the pipeline is closing.
 - **Graceful Exit:** Because the event flag was triggered, the Consumer knows no more logs are coming. It finishes processing the final alert and shuts down cleanly, followed by the Main Thread closing the program. This completely avoids hanging processes.
 
+## How to Run Locally
+To execute this script on your local machine, open your terminal (cmd), navigate to the `Chapter02` directory, and run the following command:
+
+```bash
+cd "chapter 2"
+python advanced_producer_consumer.py
+```
