@@ -3,7 +3,7 @@
 ## Overview
 This script demonstrates an advanced implementation of the **Producer-Consumer architecture** in Python. It combines two fundamental synchronization primitives from Chapter 2: `queue.Queue` and `threading.Event`. 
 
-To make the demonstration practical, the script simulates an asynchronous security logging pipeline where one thread generates threat alerts and another processes them.
+To make the demonstration practical, the script simulates an asynchronous security logging pipeline where one thread generates threat alerts and another processes them. This mirrors real-world security infrastructure, such as endpoint agents continuously sending telemetry to a central SIEM manager for active threat monitoring.
 
 ## Key Concepts Demonstrated
 
@@ -16,7 +16,26 @@ To make the demonstration practical, the script simulates an asynchronous securi
 * **Thread-Safe Output (`logging` vs `print`):**
   The `logging` module is used instead of standard `print()` statements because `logging` is thread-safe in Python. This guarantees that console outputs from simultaneous threads do not overwrite each other or break onto the same line.
 
-## How to Run
-Execute the script via the terminal:
-```bash
-python advanced_producer_consumer.py
+## Execution Output
+Running the script via the terminal produces a real-time execution timeline:
+
+```text
+2026-11-08 01:33:34,895 ProducerThread  INFO     Generated and queued alert: Failed_Login
+2026-11-08 01:33:34,896 ConsumerThread  INFO     Processing alert: Failed_Login
+2026-11-08 01:33:35,855 ProducerThread  INFO     Generated and queued alert: Malware_Detected
+2026-11-08 01:33:35,855 ConsumerThread  INFO     Processing alert: Malware_Detected
+2026-11-08 01:33:36,676 ProducerThread  INFO     Generated and queued alert: Malware_Detected
+2026-11-08 01:33:36,676 ConsumerThread  INFO     Processing alert: Malware_Detected
+2026-11-08 01:33:37,247 ProducerThread  INFO     Generated and queued alert: Failed_Login
+2026-11-08 01:33:37,247 ConsumerThread  INFO     Processing alert: Failed_Login
+2026-11-08 01:33:38,035 ProducerThread  INFO     Generated and queued alert: Malware_Detected
+2026-11-08 01:33:38,035 ConsumerThread  INFO     Processing alert: Malware_Detected
+2026-11-08 01:33:38,036 ProducerThread  INFO     Finished generating alerts. Setting stop event.
+2026-11-08 01:33:38,562 ConsumerThread  INFO     Consumer shutting down gracefully.
+2026-11-08 01:33:38,564 MainThread      INFO     Pipeline execution successfully completed.
+
+## Understanding the Execution Flow
+- **Data Handoff:** The logs show that milliseconds after the `ProducerThread` wakes up and queues a random security event, the `ConsumerThread` pulls it from the shared Queue and processes it. This generation and consumption cycle executes 5 times.
+- **The Signaling Event:** After queuing the 5th alert, the Producer announces it is finished and triggers the `threading.Event()` flag. This acts as a control signal to the Consumer that the pipeline is closing.
+- **Graceful Exit:** Because the event flag was triggered, the Consumer knows no more logs are coming. It finishes processing the final alert and shuts down cleanly, followed by the Main Thread closing the program. This completely avoids hanging processes.
+
